@@ -70,22 +70,33 @@ app.delete('/user',async (req,res)=>{
     }
 })
 //Patch Api - Update User 
-app.patch('/user',async (req,res)=>{
-    const userId = req.body.userId
-    const emailId = req.body.emailId
-    data = req.body
+app.patch('/user/:userId',async (req,res)=>{
+    const userId = req.params?.userId
+    // const emailId = req.body.emailId
+    const data = req.body
     
     try{
-      const user = await User.findByIdAndUpdate({_id:userId},data) // Upadate user by ID
+
+      const allowedUpdate = ['password','gender','profileUrl','skills']
+      const isAllowed = Object.keys(data).every((k) => allowedUpdate.includes(k))
+      console.log(isAllowed)
+      if(!isAllowed){
+        throw new Error("Update is not allowed");
+      }
+      if(data?.skills.length > 5){
+        throw new Error("Update is not allowed");
+      }
+      const user = await User.findByIdAndUpdate({_id:userId},data, {runValidators:true}) // Upadate user by ID
     //   const user = await User.findOneAndUpdate({emailId : emailId} , data) //Update user by any key
       if(user){
         res.send("User details updated succesfuly")
       }else{
         res.status(404).send("User not found.")
       }
-    }catch(err){
-        res.status(400).send("Something went wrong");
-    }
+    }catch (err) {
+        console.error(err);
+        res.status(400).send(`Something went wrong: ${err.message}`);
+      }
 })
 
 // To count the number of users in the database, we can use the countDocuments method
