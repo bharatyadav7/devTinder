@@ -4,6 +4,7 @@ const app = express();
 const User = require('../src/models/user');
 const {signupValidation} = require('./utils/validation')
 const bcrypt = require('bcrypt');
+const validator = require('validator')
 
 
 app.use(express.json()); // To parse JSON bodies
@@ -32,6 +33,30 @@ app.post('/signup',async (req,res)=>{
 
     
 
+})
+//Post Api - Post /login
+app.post('/login',async (req,res)=>{
+    try{
+        const {emailId , password} = req.body
+        if(!validator.isEmail(emailId)){
+            throw new Error("Invalid Credentials");
+        }
+
+        const user = await User.findOne({emailId : emailId})
+        if(!user){
+            throw new Error("Invalid Credentionls");
+        }
+
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if(isValidPassword){
+            res.send("Login Successfully");
+        }else{
+            throw new Error("Invalid Credentiols");
+        }
+        
+    }catch(err){
+        res.status(400).send("ERROR : " + err.message)
+    }
 })
 // Get Api - To fetch user data by Email
 app.get('/user',async (req,res)=>{
