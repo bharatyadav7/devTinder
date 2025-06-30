@@ -2,27 +2,32 @@ const express = require('express')
 const connectDB = require('../src/config/database')
 const app = express();
 const User = require('../src/models/user');
+const {signupValidation} = require('./utils/validation')
+const bcrypt = require('bcrypt');
+
 
 app.use(express.json()); // To parse JSON bodies
-
 //Post api - Post /signup 
 app.post('/signup',async (req,res)=>{
-    // const user = new User({
-    //     firstName: "Richa",
-    //     lastName: "Chabbra",
-    //     emailId: "richa.yo@gmail.com",
-    //     password: "xyz",
-    //     age: 24,
-    //     gender: "Female"
-    // })
-
-    const user =  new User(req.body);
-
     try{
+        //Validate the Data
+        signupValidation(req);
+        const {firstName,lastName,emailId,password} = req.body;
+        
+        //Encrypt the password
+        const hashPassword = await bcrypt.hash(password, 10) //10 - number of salts(how strong the password is)
+        const user =  new User({
+            firstName,
+            lastName,
+            emailId,
+            password:hashPassword
+        });
+
         await user.save();
         res.send("User added successfully");
+
     }catch(err){
-        res.status(400).send("Record is not saved" + err)
+        res.status(400).send("ERROR : " + err)
     }
 
     

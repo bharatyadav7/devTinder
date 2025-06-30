@@ -48,7 +48,6 @@ const userSchema = new mongoose.Schema({
     },
     profileUrl:{
         type: String,
-        default: "/image.png",
         validate(values){
             if(!validator.isURL(values)){
                 throw new Error("URL is not valid " + values)
