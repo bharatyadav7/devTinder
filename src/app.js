@@ -5,9 +5,12 @@ const User = require('../src/models/user');
 const {signupValidation} = require('./utils/validation')
 const bcrypt = require('bcrypt');
 const validator = require('validator')
-
+const cookieParser = require('cookie-parser')
+const webToken = require('jsonwebtoken');
+const { userAuth } = require('../middlewares/auth')
 
 app.use(express.json()); // To parse JSON bodies
+app.use(cookieParser());
 //Post api - Post /signup 
 app.post('/signup',async (req,res)=>{
     try{
@@ -47,23 +50,43 @@ app.post('/login',async (req,res)=>{
             throw new Error("Invalid Credentionls");
         }
 
-        const isValidPassword = await bcrypt.compare(password, user.password);
+        const isValidPassword = await user.isValidHashPassword(password)
         if(isValidPassword){
+            const generatedToken = await user.getJwt();
+            const token = res.cookie('token', generatedToken, {expires: new Date(Date.now()+ 24 * 3600000)})
+            // console.log('token', token)
             res.send("Login Successfully");
         }else{
             throw new Error("Invalid Credentiols");
         }
         
     }catch(err){
-        res.status(400).send("ERROR : " + err.message)
+        res.status(400).send("ERROR : " + err.message);
     }
 })
+//Get Api - Profile Api
+app.get('/profile',userAuth, async (req,res)=>{
+     try{
+        const user = req.user
+        res.send(user)
+    }catch(err){
+        res.status(400).send("ERROR : " + err.message);
+    }
+})
+//Get Api - sendConnection Api
+app.post('/sendConnection',userAuth,(req,res)=>{
+    const user = req.user;
+    res.send(user.firstName + ' send the request.')
+})
+
+
 // Get Api - To fetch user data by Email
 app.get('/user',async (req,res)=>{
-    const userEmail = req.body.emailId
-
+    // const userEmail = req.body.emailId
+    
     try{
-        const user = await User.find({emailId : userEmail})
+        const {emailId} = req.body;
+        const user = await User.find({emailId : emailId})
         if(user.length > 0){
             res.send(user);
         }else{
