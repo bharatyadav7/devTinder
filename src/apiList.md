@@ -3,9 +3,10 @@
 - Post /login
 - Post /logout
 
-## UserEdit
-- Patch user/edit
-- Patch user/password
+## ProfileEdit
+- get profile/veiw
+- Patch profile/edit
+- Patch profile/password
 
 ## userConnection
 - Post request/send
